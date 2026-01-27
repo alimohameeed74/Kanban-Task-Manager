@@ -50,16 +50,15 @@ let emptyCompletedTasks = document.querySelector('#empty-completed-tasks') as HT
 
 // ===============================
 // Variables for Update Operation
-
-
+let savechangesButton = document.getElementById('savechangesButton') as HTMLButtonElement;
+let cancelchangesButton = document.getElementById('cancelchangesButton') as HTMLButtonElement;
+let closechangesButton = document.getElementById('closechangesButton') as HTMLButtonElement;
+let updatedTaskTitle = document.getElementById('updatedTaskTitle')! as HTMLInputElement;
+let updatedPriority = document.getElementById('updatedPriority')! as HTMLInputElement;
+let updatedDueDate = document.getElementById('updatedDueDate')! as HTMLInputElement;
+let updatedDescription = document.getElementById('updatedDescription')! as HTMLInputElement;
 // ===============================
 
-
-
-// ===============================
-// Variables for Delete Operation
-
-// ===============================
 
 
 
@@ -72,6 +71,9 @@ let emptyCompletedTasks = document.querySelector('#empty-completed-tasks') as HT
 function init(){
     (window as any).addTask = addTask;
     (window as any).undoTask = undoTask;
+    (window as any).deleteTask = deleteTask;
+    (window as any).clearUpdatedForm = clearUpdatedForm;
+    (window as any).fillUpdatedForm = fillUpdatedForm;
     const obj1fromLS = localStorage.getItem('todoTasks');
     const obj2fromLS = localStorage.getItem('inprogressTasks');
     const obj3fromLS = localStorage.getItem('completedTasks');
@@ -98,9 +100,14 @@ function init(){
 function clearForm(){
     taskTitle.value='';
     priority.value='Medium';
-    dueDate.value='';
     description.value='';
     dueDate.value = formatDateForInput(new Date());
+}
+function clearUpdatedForm(){
+    updatedTaskTitle.value='';
+    updatedPriority.value='Medium';
+    updatedDescription.value='';
+    updatedDueDate.value = formatDateForInput(new Date());
 }
 function formatDateShort(dateInput: string | Date): string {
     let date;
@@ -143,7 +150,7 @@ function formatDateForInput(date: Date): string {
 
   return `${year}-${month}-${day}`;
 }
-function fireswal() {
+function fireswal(status: string) {
   const Toast = Swal.mixin({
     toast: true,
     position: "top-end",
@@ -158,11 +165,9 @@ function fireswal() {
 
   Toast.fire({
     icon: "success",
-    title: "Task added successfully!"
+    title: `Task ${status}ed successfully!`
   });
 }
-
-
 // ===============================
 
 
@@ -183,7 +188,7 @@ function addTask(whichList: number = 1 ,index: number = 0){
       lastCreate: new Date()
       }
       toDoTasks.push(newTaskObj);
-      fireswal();
+      fireswal("add");
     }
     else if (whichList === 2){ // in progress
       inProgressTasks.push(toDoTasks[index]!);
@@ -225,8 +230,6 @@ function undoTask(whichList: number = 1 ,index: number = 0){
     displayTasks(inProgressTasks,2);
 
 }
- 
-
 
 // ===============================
 
@@ -257,10 +260,16 @@ function displayTasks2(list: task[], id: number){
                       <div
                         class="d-flex justify-content-center align-items-center"
                       >
-                        <button id="editBtn" class="rounded-2 me-2">
+                        <button
+                          data-bs-toggle="modal"
+                          data-bs-target="#exampleModal1"
+                          onclick="fillUpdatedForm(1,${i})"
+                         id="editBtn" class="rounded-2 me-2">
                           <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button id="deleteBtn" class="rounded-2">
+                        <button
+                        onclick="deleteTask(1,${i})"
+                         id="deleteBtn" class="rounded-2">
                           <i class="fa-solid fa-trash-can"></i>
                         </button>
                       </div>
@@ -348,10 +357,16 @@ function displayTasks2(list: task[], id: number){
                       <div
                         class="d-flex justify-content-center align-items-center"
                       >
-                        <button id="editBtn1" class="rounded-2 me-2">
+                        <button
+                          data-bs-toggle="modal"
+                          data-bs-target="#exampleModal1"
+                          onclick="fillUpdatedForm(2,${i})"
+                         id="editBtn1" class="rounded-2 me-2">
                           <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button id="deleteBtn1" class="rounded-2">
+                        <button
+                        onclick="deleteTask(2,${i})"
+                         id="deleteBtn1" class="rounded-2">
                           <i class="fa-solid fa-trash-can"></i>
                         </button>
                       </div>
@@ -438,10 +453,14 @@ function displayTasks2(list: task[], id: number){
                       <div
                         class="d-flex justify-content-center align-items-center"
                       >
-                        <button id="editBtn2" class="rounded-2 me-2">
+                        <button 
+                          
+                        id="editBtn2" class="d-none rounded-2 me-2">
                           <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button id="deleteBtn2" class="rounded-2">
+                        <button 
+                        onclick="deleteTask(3,${i})"
+                        id="deleteBtn2" class="rounded-2">
                           <i class="fa-solid fa-trash-can"></i>
                         </button>
                       </div>
@@ -552,20 +571,72 @@ function displayTasks(list: task[], id: number){
     }
     displayTasks2(list,id);
 }
-
-
 // ===============================
 
 
 // ===============================
 // Functions for Update Operation
+function confirmUpdate(){
+  const index = +savechangesButton.getAttribute('changedIndex')!;
+  const list = +savechangesButton.getAttribute('whichList')!;
+  if (+list! === 1){
+    toDoTasks[index]!.title = updatedTaskTitle.value;
+    toDoTasks[index]!.priority = updatedPriority.value;
+    toDoTasks[index]!.date = updatedDueDate.value;
+    toDoTasks[index]!.desc = updatedDescription.value;
+    localStorage.setItem("todoTasks",JSON.stringify(toDoTasks));
+    displayTasks(toDoTasks,1);
+  }
+  else if(+list! === 2){
+    inProgressTasks[index]!.title = updatedTaskTitle.value;
+    inProgressTasks[index]!.priority = updatedPriority.value;
+    inProgressTasks[index]!.date = updatedDueDate.value;
+    inProgressTasks[index]!.desc = updatedDescription.value;
+    localStorage.setItem("inprogressTasks",JSON.stringify(inProgressTasks));
+    displayTasks(inProgressTasks,2);
+  }
+  fireswal("updat");
 
+}
+
+function fillUpdatedForm(whichList: number = 1 ,index: number = 0){
+  if (whichList === 1){ // to do
+    updatedTaskTitle.value = toDoTasks[index]!.title;
+    updatedPriority.value = toDoTasks[index]!.priority;
+    updatedDueDate.value = toDoTasks[index]!.date;
+    updatedDescription.value = toDoTasks[index]!.desc;
+  }
+  else if (whichList === 2){ // in progress
+    updatedTaskTitle.value = inProgressTasks[index]!.title;
+    updatedPriority.value = inProgressTasks[index]!.priority;
+    updatedDueDate.value = inProgressTasks[index]!.date;
+    updatedDescription.value = inProgressTasks[index]!.desc;
+  }
+  savechangesButton.setAttribute('changedIndex',String(index))
+  savechangesButton.setAttribute('whichList',String(whichList))
+}
 // ===============================
 
 
 // ===============================
 // Functions for Delete Operation
-
+function deleteTask(whichList: number = 1 ,index: number = 0){
+  if(whichList === 1){
+    toDoTasks.splice(index,1);
+    localStorage.setItem("todoTasks",JSON.stringify(toDoTasks))
+    displayTasks(toDoTasks,1)
+  }
+  else if(whichList === 2){
+    inProgressTasks.splice(index,1);
+    localStorage.setItem("inprogressTasks",JSON.stringify(inProgressTasks))
+    displayTasks(inProgressTasks,2)
+  }
+  else if(whichList === 3){
+    completedTasks.splice(index,1);
+    localStorage.setItem("completedTasks",JSON.stringify(completedTasks))
+    displayTasks(completedTasks,3)
+  }
+}
 // ===============================
 
 
@@ -579,8 +650,6 @@ function displayTasks(list: task[], id: number){
 init();
 // ===============================
 
-
-
 // ===============================
 // Logic for Add Operation
 cancelBtn.addEventListener('click', clearForm);
@@ -592,20 +661,10 @@ addBtn.addEventListener("click", function(){
 
 
 // ===============================
-// Logic for Get Operation
-
-// ===============================
-
-
-// ===============================
 // Logic for Update Operation
-
-// ===============================
-
-
-// ===============================
-// Logic for Delete Operation
-
+savechangesButton.addEventListener('click',confirmUpdate)
+cancelchangesButton.addEventListener('click',clearUpdatedForm)
+closechangesButton.addEventListener('click',clearUpdatedForm)
 // ===============================
 
 
