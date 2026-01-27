@@ -15,6 +15,7 @@ interface task{
     lastCreate: Date 
 }
 declare const Swal: any;
+let toDoCounter: number = 0;
 // ===============================
  
  
@@ -70,9 +71,11 @@ let emptyCompletedTasks = document.querySelector('#empty-completed-tasks') as HT
 // ===============================
 function init(){
     (window as any).addTask = addTask;
+    (window as any).undoTask = undoTask;
     const obj1fromLS = localStorage.getItem('todoTasks');
     const obj2fromLS = localStorage.getItem('inprogressTasks');
     const obj3fromLS = localStorage.getItem('completedTasks');
+    const obj4fromLS = localStorage.getItem('todoCounter');
     if(obj1fromLS){
         toDoTasks = JSON.parse(obj1fromLS);
     }
@@ -82,7 +85,11 @@ function init(){
     if(obj3fromLS){
         completedTasks = JSON.parse(obj3fromLS);
     }
+    if(obj4fromLS){
+        toDoCounter = JSON.parse(obj4fromLS);
+    }
     dueDate.setAttribute('min',formatDateForInput(new Date()))
+    dueDate.value = formatDateForInput(new Date());
     clearForm();
     displayTasks(toDoTasks,1);
     displayTasks(inProgressTasks,2);
@@ -93,6 +100,7 @@ function clearForm(){
     priority.value='Medium';
     dueDate.value='';
     description.value='';
+    dueDate.value = formatDateForInput(new Date());
 }
 function formatDateShort(dateInput: string | Date): string {
     let date;
@@ -164,16 +172,18 @@ function fireswal() {
 // Functions for Add Operation
 function addTask(whichList: number = 1 ,index: number = 0){
     if(whichList === 1){
-        let newTaskObj:task = {
-        id: toDoTasks.length,  
-        title : taskTitle.value,
-        priority : priority.value,
-        date : dueDate.value,
-        desc : description.value,
-        lastCreate: new Date()
-        }
-        toDoTasks.push(newTaskObj);
-        fireswal();
+      toDoCounter++;
+      localStorage.setItem("todoCounter",JSON.stringify(toDoCounter))
+      let newTaskObj:task = {
+      id: toDoCounter,  
+      title : taskTitle.value,
+      priority : priority.value,
+      date : dueDate.value,
+      desc : description.value,
+      lastCreate: new Date()
+      }
+      toDoTasks.push(newTaskObj);
+      fireswal();
     }
     else if (whichList === 2){ // in progress
       inProgressTasks.push(toDoTasks[index]!);
@@ -192,6 +202,27 @@ function addTask(whichList: number = 1 ,index: number = 0){
     clearForm();
     localStorage.setItem('todoTasks', JSON.stringify(toDoTasks));
     displayTasks(toDoTasks,1);
+
+}
+ 
+function undoTask(whichList: number = 1 ,index: number = 0){
+    if (whichList === 2){ // in progress
+      toDoTasks.push(inProgressTasks[index]!);
+      inProgressTasks.splice(index,1);
+      toDoTasks.sort((a, b) => a.id - b.id);
+      localStorage.setItem('todoTasks', JSON.stringify(toDoTasks));
+      displayTasks(toDoTasks,1);
+    }
+    else if(whichList === 3){ // completed
+      completedTasks.push(inProgressTasks[index]!);
+      inProgressTasks.splice(index,1);
+      completedTasks.sort((a, b) => a.id - b.id);
+      localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+      displayTasks(completedTasks,3);
+    }
+    clearForm();
+    localStorage.setItem('inprogressTasks', JSON.stringify(inProgressTasks));
+    displayTasks(inProgressTasks,2);
 
 }
  
@@ -311,7 +342,7 @@ function displayTasks2(list: task[], id: number){
                         "
                         class="d-flex justify-content-start align-items-center"
                       >
-                        <i class="fa-solid fa-circle me-2"></i>
+                        <i style="color: #FFB900;" class="fa-solid fa-circle me-2"></i>
                         <span>#<span>${ (i >= 10) ? (i >=100) ? i + 1 : `0${i + 1}` : `00${i + 1}`}</span></span>
                       </div>
                       <div
@@ -365,16 +396,17 @@ function displayTasks2(list: task[], id: number){
                       class="task-footer pt-3 d-flex justify-content-start align-items-center"
                     >
                       <button
-                        
                         style="font-size: 11px"
-                        class="btn btn-warning rounded-3 me-2"
+                        class="btn btn-info rounded-3 me-2"
+                        onclick="undoTask(2,${i})"
                       >
-                        <i class="fa-solid fa-play"></i>
-                        Start
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                        To Do
                       </button>
                       <button
                         style="font-size: 11px"
                         class="btn btn-success rounded-3 me-2"
+                        onclick="undoTask(3,${i})"
                       >
                         <i class="fa-solid fa-check"></i>
                         Completed
@@ -400,7 +432,7 @@ function displayTasks2(list: task[], id: number){
                         "
                         class="d-flex justify-content-start align-items-center"
                       >
-                        <i class="fa-solid fa-circle me-2"></i>
+                        <i style="color:#3FCC9E" class="fa-solid fa-circle me-2"></i>
                         <span>#<span>${ (i >= 10) ? (i >=100) ? i + 1 : `0${i + 1}` : `00${i + 1}`}</span></span>
                       </div>
                       <div
@@ -414,21 +446,29 @@ function displayTasks2(list: task[], id: number){
                         </button>
                       </div>
                     </div>
-                    <h3 id="task-title2">${(list[i]?.title) ? list[i]?.title : 'New task' }</h3>
+                    <h3 class="text-decoration-line-through" id="task-title2">${(list[i]?.title) ? list[i]?.title : 'New task' }</h3>
                     <p id="task-desc2">${(list[i]?.desc) ? list[i]?.desc : 'Adding new task'}</p>
                     <div
                       class="d-flex mb-2 justify-content-start align-items-center"
                     >
                       
                       <div
-                        class="d-inline-flex p-2 align-items-center rounded-5 task-priority-con-${list[i]?.priority}"
+                        class="d-inline-flex p-2 align-items-center rounded-5 task-priority-con-${list[i]?.priority} me-3"
                       >
                         <i
                           style="font-size: 6px"
                           class="fa-solid fa-circle ${list[i]?.priority} me-2"
                         ></i>
                         <span id="task-priority2" class="${list[i]?.priority}">${list[i]?.priority}</span>
+                        
                       </div>
+                      <div>
+                      <i
+                          style="font-size: 10px"
+                          class="fa-regular fa-circle-check"
+                        ></i>
+                        <span  id="Done">Done</span></div>
+
                     </div>
                     <p>
                         <div
@@ -454,7 +494,7 @@ function displayTasks2(list: task[], id: number){
                       class="task-footer pt-3 d-flex justify-content-start align-items-center"
                     >
                       <button
-                        
+                        disabled
                         style="font-size: 11px"
                         class="btn btn-warning rounded-3 me-2"
                       >
@@ -462,6 +502,7 @@ function displayTasks2(list: task[], id: number){
                         Start
                       </button>
                       <button
+                      disabled
                         style="font-size: 11px"
                         class="btn btn-success rounded-3 me-2"
                       >

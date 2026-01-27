@@ -217,6 +217,15 @@ body {
     font-size: var(--fz-10);
 }
 
+#Done, .fa-circle-check{
+    font-weight: var(--fw-600);
+    font-size: var(--fz-10);
+    color: green;
+}
+
+.Done{
+    background-color: lightgreen;
+}
 .Low{
     color: oklch(0.546 0.245 262.881);
 }
@@ -249,6 +258,17 @@ body {
     --bs-btn-hover-border-color: transparent;
     --bs-btn-active-color: oklch(0.555 0.163 48.998);
     --bs-btn-active-bg: #FEE685;
+    --bs-btn-active-border-color: transparent;
+}
+.btn-info {
+    --bs-btn-color: #687587;
+    --bs-btn-bg: #F1F5F9;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: #687587;
+    --bs-btn-hover-bg: #E2E8F0;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: #687587;
+    --bs-btn-active-bg: #E2E8F0;
     --bs-btn-active-border-color: transparent;
 }
 
