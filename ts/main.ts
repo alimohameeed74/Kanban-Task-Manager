@@ -1,7 +1,4 @@
-
-
 // 1) Define Main Variables
-
 // ===============================
 let toDoTasks: task[]=[];
 let inProgressTasks: task[]=[];
@@ -17,10 +14,6 @@ interface task{
 declare const Swal: any;
 let toDoCounter: number = 0;
 // ===============================
- 
- 
-
-
 // ===============================
 // Variables for Add Operation
 let taskTitle = document.querySelector('#taskTitle') as HTMLInputElement;
@@ -31,9 +24,6 @@ let addBtn = document.querySelector('#addButton') as HTMLButtonElement;
 let cancelBtn = document.querySelector('#cancelButton') as HTMLButtonElement;
 let closeModal1Button = document.querySelector('#closeModalButton') as HTMLButtonElement;
 // ===============================
-
-
-
 // ===============================
 // Variables for Get Operation
 let toDoTasksList = document.querySelector('#to-do-tasks-list') as HTMLElement;
@@ -46,8 +36,6 @@ let completedTasksList = document.querySelector('#completed-tasks-list') as HTML
 let numOfcompletedTasks = document.getElementById('num-of-completed-tasks') as HTMLElement;
 let emptyCompletedTasks = document.querySelector('#empty-completed-tasks') as HTMLElement;
 // ===============================
-   
-
 // ===============================
 // Variables for Update Operation
 let savechangesButton = document.getElementById('savechangesButton') as HTMLButtonElement;
@@ -58,15 +46,7 @@ let updatedPriority = document.getElementById('updatedPriority')! as HTMLInputEl
 let updatedDueDate = document.getElementById('updatedDueDate')! as HTMLInputElement;
 let updatedDescription = document.getElementById('updatedDescription')! as HTMLInputElement;
 // ===============================
-
-
-
-
-
-
 // 2) Define Main Functions
-
-
 // ===============================
 function init(){
     (window as any).addTask = addTask;
@@ -150,7 +130,7 @@ function formatDateForInput(date: Date): string {
 
   return `${year}-${month}-${day}`;
 }
-function fireswal(status: string) {
+function fireswal(status: string, success: boolean) {
   const Toast = Swal.mixin({
     toast: true,
     position: "top-end",
@@ -164,31 +144,33 @@ function fireswal(status: string) {
   });
 
   Toast.fire({
-    icon: "success",
-    title: `Task ${status}ed successfully!`
+    icon: `${(success) ? 'success' : 'error' }`,
+    title: `Task ${status}ed ${(success) ? 'successfully!' : 'yet!'}`
   });
 }
 // ===============================
-
-
-
-
 // ===============================
 // Functions for Add Operation
 function addTask(whichList: number = 1 ,index: number = 0){
     if(whichList === 1){
-      toDoCounter++;
-      localStorage.setItem("todoCounter",JSON.stringify(toDoCounter))
       let newTaskObj:task = {
-      id: toDoCounter,  
+      id: 0,  
       title : taskTitle.value,
       priority : priority.value,
       date : dueDate.value,
       desc : description.value,
       lastCreate: new Date()
       }
-      toDoTasks.push(newTaskObj);
-      fireswal("add");
+      if( validateInput(newTaskObj.title,1) &&  validateInput(newTaskObj.desc,2)){
+          toDoCounter++;
+          newTaskObj.id=toDoCounter;
+          localStorage.setItem("todoCounter",JSON.stringify(toDoCounter))
+          toDoTasks.push(newTaskObj);
+          fireswal("add",true);
+      }
+      else{
+          fireswal("isn't add", false);
+      }
     }
     else if (whichList === 2){ // in progress
       inProgressTasks.push(toDoTasks[index]!);
@@ -209,7 +191,6 @@ function addTask(whichList: number = 1 ,index: number = 0){
     displayTasks(toDoTasks,1);
 
 }
- 
 function undoTask(whichList: number = 1 ,index: number = 0){
     if (whichList === 2){ // in progress
       toDoTasks.push(inProgressTasks[index]!);
@@ -230,9 +211,7 @@ function undoTask(whichList: number = 1 ,index: number = 0){
     displayTasks(inProgressTasks,2);
 
 }
-
 // ===============================
-
 // ===============================
 // Functions for Get Operation
 function displayTasks2(list: task[], id: number){
@@ -572,33 +551,35 @@ function displayTasks(list: task[], id: number){
     displayTasks2(list,id);
 }
 // ===============================
-
-
 // ===============================
 // Functions for Update Operation
 function confirmUpdate(){
   const index = +savechangesButton.getAttribute('changedIndex')!;
   const list = +savechangesButton.getAttribute('whichList')!;
-  if (+list! === 1){
-    toDoTasks[index]!.title = updatedTaskTitle.value;
-    toDoTasks[index]!.priority = updatedPriority.value;
-    toDoTasks[index]!.date = updatedDueDate.value;
-    toDoTasks[index]!.desc = updatedDescription.value;
-    localStorage.setItem("todoTasks",JSON.stringify(toDoTasks));
-    displayTasks(toDoTasks,1);
+  if(validateInput(updatedTaskTitle.value,1) && validateInput(updatedDescription.value,2)){
+    if (+list! === 1){
+      toDoTasks[index]!.title = updatedTaskTitle.value;
+      toDoTasks[index]!.priority = updatedPriority.value;
+      toDoTasks[index]!.date = updatedDueDate.value;
+      toDoTasks[index]!.desc = updatedDescription.value;
+      localStorage.setItem("todoTasks",JSON.stringify(toDoTasks));
+      displayTasks(toDoTasks,1);
+      }
+    else if(+list! === 2){
+      inProgressTasks[index]!.title = updatedTaskTitle.value;
+      inProgressTasks[index]!.priority = updatedPriority.value;
+      inProgressTasks[index]!.date = updatedDueDate.value;
+      inProgressTasks[index]!.desc = updatedDescription.value;
+      localStorage.setItem("inprogressTasks",JSON.stringify(inProgressTasks));
+      displayTasks(inProgressTasks,2);
+      }
+    fireswal("updat",true);
   }
-  else if(+list! === 2){
-    inProgressTasks[index]!.title = updatedTaskTitle.value;
-    inProgressTasks[index]!.priority = updatedPriority.value;
-    inProgressTasks[index]!.date = updatedDueDate.value;
-    inProgressTasks[index]!.desc = updatedDescription.value;
-    localStorage.setItem("inprogressTasks",JSON.stringify(inProgressTasks));
-    displayTasks(inProgressTasks,2);
+  else{
+    fireswal("isn't updat",false);
   }
-  fireswal("updat");
 
 }
-
 function fillUpdatedForm(whichList: number = 1 ,index: number = 0){
   if (whichList === 1){ // to do
     updatedTaskTitle.value = toDoTasks[index]!.title;
@@ -616,8 +597,6 @@ function fillUpdatedForm(whichList: number = 1 ,index: number = 0){
   savechangesButton.setAttribute('whichList',String(whichList))
 }
 // ===============================
-
-
 // ===============================
 // Functions for Delete Operation
 function deleteTask(whichList: number = 1 ,index: number = 0){
@@ -638,18 +617,25 @@ function deleteTask(whichList: number = 1 ,index: number = 0){
   }
 }
 // ===============================
-
-
-
-
-
-
+// Functions for Validate Operation
+function validateInput(input: string , number: number): boolean{
+  let validationObj={
+    title: /^[A-Za-z ]{3,}$/,
+    desc: /^[A-Za-z0-9 ]*$/
+  }
+  if (number === 1){ // task title
+    return validationObj.title.test(input);
+  }
+  else if (number === 2){ // task desc
+    return validationObj.desc.test(input);
+  }
+  return false;
+}
+// ===============================
 // 3) Define Main logic
-
 // ===============================
 init();
 // ===============================
-
 // ===============================
 // Logic for Add Operation
 cancelBtn.addEventListener('click', clearForm);
@@ -658,23 +644,9 @@ addBtn.addEventListener("click", function(){
     addTask(1);
 })
 // ===============================
-
-
 // ===============================
 // Logic for Update Operation
 savechangesButton.addEventListener('click',confirmUpdate)
 cancelchangesButton.addEventListener('click',clearUpdatedForm)
 closechangesButton.addEventListener('click',clearUpdatedForm)
 // ===============================
-
-
-
-
-
-
-
-
-
-
-
-

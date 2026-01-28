@@ -115,7 +115,7 @@ function formatDateForInput(date) {
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
 }
-function fireswal(status) {
+function fireswal(status, success) {
     const Toast = Swal.mixin({
         toast: true,
         position: "top-end",
@@ -128,8 +128,8 @@ function fireswal(status) {
         }
     });
     Toast.fire({
-        icon: "success",
-        title: `Task ${status}ed successfully!`
+        icon: `${(success) ? 'success' : 'error'}`,
+        title: `Task ${status}ed ${(success) ? 'successfully!' : 'yet!'}`
     });
 }
 // ===============================
@@ -137,18 +137,24 @@ function fireswal(status) {
 // Functions for Add Operation
 function addTask(whichList = 1, index = 0) {
     if (whichList === 1) {
-        toDoCounter++;
-        localStorage.setItem("todoCounter", JSON.stringify(toDoCounter));
         let newTaskObj = {
-            id: toDoCounter,
+            id: 0,
             title: taskTitle.value,
             priority: priority.value,
             date: dueDate.value,
             desc: description.value,
             lastCreate: new Date()
         };
-        toDoTasks.push(newTaskObj);
-        fireswal("add");
+        if (validateInput(newTaskObj.title, 1) && validateInput(newTaskObj.desc, 2)) {
+            toDoCounter++;
+            newTaskObj.id = toDoCounter;
+            localStorage.setItem("todoCounter", JSON.stringify(toDoCounter));
+            toDoTasks.push(newTaskObj);
+            fireswal("add", true);
+        }
+        else {
+            fireswal("isn't add", false);
+        }
     }
     else if (whichList === 2) { // in progress
         inProgressTasks.push(toDoTasks[index]);
@@ -532,23 +538,28 @@ function displayTasks(list, id) {
 function confirmUpdate() {
     const index = +savechangesButton.getAttribute('changedIndex');
     const list = +savechangesButton.getAttribute('whichList');
-    if (+list === 1) {
-        toDoTasks[index].title = updatedTaskTitle.value;
-        toDoTasks[index].priority = updatedPriority.value;
-        toDoTasks[index].date = updatedDueDate.value;
-        toDoTasks[index].desc = updatedDescription.value;
-        localStorage.setItem("todoTasks", JSON.stringify(toDoTasks));
-        displayTasks(toDoTasks, 1);
+    if (validateInput(updatedTaskTitle.value, 1) && validateInput(updatedDescription.value, 2)) {
+        if (+list === 1) {
+            toDoTasks[index].title = updatedTaskTitle.value;
+            toDoTasks[index].priority = updatedPriority.value;
+            toDoTasks[index].date = updatedDueDate.value;
+            toDoTasks[index].desc = updatedDescription.value;
+            localStorage.setItem("todoTasks", JSON.stringify(toDoTasks));
+            displayTasks(toDoTasks, 1);
+        }
+        else if (+list === 2) {
+            inProgressTasks[index].title = updatedTaskTitle.value;
+            inProgressTasks[index].priority = updatedPriority.value;
+            inProgressTasks[index].date = updatedDueDate.value;
+            inProgressTasks[index].desc = updatedDescription.value;
+            localStorage.setItem("inprogressTasks", JSON.stringify(inProgressTasks));
+            displayTasks(inProgressTasks, 2);
+        }
+        fireswal("updat", true);
     }
-    else if (+list === 2) {
-        inProgressTasks[index].title = updatedTaskTitle.value;
-        inProgressTasks[index].priority = updatedPriority.value;
-        inProgressTasks[index].date = updatedDueDate.value;
-        inProgressTasks[index].desc = updatedDescription.value;
-        localStorage.setItem("inprogressTasks", JSON.stringify(inProgressTasks));
-        displayTasks(inProgressTasks, 2);
+    else {
+        fireswal("isn't updat", false);
     }
-    fireswal("updat");
 }
 function fillUpdatedForm(whichList = 1, index = 0) {
     if (whichList === 1) { // to do
@@ -585,6 +596,21 @@ function deleteTask(whichList = 1, index = 0) {
         localStorage.setItem("completedTasks", JSON.stringify(completedTasks));
         displayTasks(completedTasks, 3);
     }
+}
+// ===============================
+// Functions for Validate Operation
+function validateInput(input, number) {
+    let validationObj = {
+        title: /^[A-Za-z ]{3,}$/,
+        desc: /^[A-Za-z0-9 ]*$/
+    };
+    if (number === 1) { // task title
+        return validationObj.title.test(input);
+    }
+    else if (number === 2) { // task desc
+        return validationObj.desc.test(input);
+    }
+    return false;
 }
 // ===============================
 // 3) Define Main logic
